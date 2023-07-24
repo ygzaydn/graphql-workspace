@@ -1,14 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import {
-    ApolloClient,
-    InMemoryCache,
-    ApolloProvider,
-    gql,
-} from "@apollo/client";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 import SongList from "./components/songlist";
 
-const client = new ApolloClient({});
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    uri: "http://localhost:4000/graphql",
+});
 
 const Root = () => {
     return (
