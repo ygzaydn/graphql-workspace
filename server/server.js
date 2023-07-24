@@ -4,12 +4,12 @@ const expressGraphQL = require("express-graphql");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const schema = require("./schema/schema");
+require("dotenv").config();
 
 const app = express();
 
 // Replace with your Mongo Atlas URI
-const MONGO_URI =
-    "mongodb+srv://voidwebdizayn:A7CQmgRG0H6Quee0@graphql.cdcxb81.mongodb.net/lyrical?retryWrites=true&w=majority";
+const MONGO_URI = `mongodb+srv://voidwebdizayn:${process.env.MONGODB_PASSWORD}@graphql.cdcxb81.mongodb.net/lyrical?retryWrites=true&w=majority`;
 if (!MONGO_URI) {
     throw new Error("You must provide a Mongo Atlas URI");
 }
