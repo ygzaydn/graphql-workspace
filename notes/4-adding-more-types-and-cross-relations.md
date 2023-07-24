@@ -116,7 +116,7 @@ companyId   |   string
 */
 ```
 
-![4.1](./4.1.png)
+![4.1](./images/4.1.png)
 
 As we can see from our figure above, our user model and user type has some differencies. In this case, we need to add resolve for any differencies.
 
@@ -199,7 +199,7 @@ const UserType = GraphQLObjectType({
 ```
 
 
-![4.2](./4.2.png)
+![4.2](./images/4.2.png)
 
 It's also possible to add field to `RootQuery` to get companies directly.
 
