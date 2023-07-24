@@ -253,3 +253,56 @@ const mutation = new GraphQLObjectType({
     },
 });
 ```
+
+Similarly, `editUser`
+
+```js
+const mutation = new GraphQLObjectType({
+    name: "Mutation",
+    fields: {
+        addUser: {
+            type: UserType,
+            args: {
+                firstName: { type: new GraphQLNonNull(GraphQLString) },
+                age: { type: new GraphQLNonNull(GraphQLInt) },
+                companyId: { type: GraphQLString },
+            },
+            resolve: async (parentNode, args) => {
+                const res = await axios.post("http://localhost:3000/users", {
+                    ...args,
+                });
+                return res.data;
+            },
+        },
+        deleteUser: {
+            type: UserType,
+            args: { id: { type: new GraphQLNonNull(GraphQLString) } },
+            resolve: async (parentNode, args) => {
+                const result = await axios.delete(
+                    `http://localhost:3000/users/${args.id}`
+                );
+                return result.data;
+            },
+        },
+        editUser: {
+            type: UserType,
+            args: {
+                id: {
+                    type: new GraphQLNonNull(GraphQLString),
+                },
+                firstName: { type: GraphQLString },
+                age: { type: GraphQLInt },
+                companyId: { type: GraphQLString },
+            },
+            resolve: async (parentNode, args) => {
+                const { id, ...rest } = args;
+                const result = await axios.patch(
+                    `http://localhost:3000/users/${id}`,
+                    { ...rest }
+                );
+                return result.data;
+            },
+        },
+    },
+});
+```
