@@ -13,3 +13,39 @@ There are several alternatives that we may use as a GraphQL client. Some of them
 We'll move with Apollo Client. Apollo also has backend server for GraphQL. (remember we've used express-graphql)
 
 ![7.3](./images/7.3.png)
+
+## Connecting Apollo Client
+
+Our structure will look like
+
+![7.5](./images/7.5.png)
+
+In between our react application and GraphQL server, we have 2 big structure, Apollo Store and Apollo Provider.
+
+Apollo Store is a store that exists on client side that manages the data coming from GraphQL Server. Apollo Store is an abstract structure that is agnostic to frontend framework.
+
+Apollo Provider provides the data from the store and inject into react application. It works as a glue.
+
+Setuping Apollo Store is short, we generally will work on Apollo Provider.
+
+We will define a client and wrap our react app with provider.
+
+```jsx
+//client/index.js
+import React from "react";
+import ReactDOM from "react-dom";
+import ApolloClient from "apollo-client";
+import { ApolloProvider } from "react-apollo";
+
+const client = new ApolloClient({});
+
+const Root = () => {
+    return (
+        <ApolloProvider client={client}>
+            <div>Lyrical</div>
+        </ApolloProvider>
+    );
+};
+
+ReactDOM.render(<Root />, document.querySelector("#root"));
+```
