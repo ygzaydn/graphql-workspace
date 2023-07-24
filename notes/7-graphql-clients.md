@@ -34,18 +34,60 @@ We will define a client and wrap our react app with provider.
 //client/index.js
 import React from "react";
 import ReactDOM from "react-dom";
-import ApolloClient from "apollo-client";
-import { ApolloProvider } from "react-apollo";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 
-const client = new ApolloClient({});
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    uri: "http://localhost:4000/graphql",
+});
 
 const Root = () => {
     return (
         <ApolloProvider client={client}>
-            <div>Lyrical</div>
+          <div>Lyrical</div>
         </ApolloProvider>
     );
 };
 
 ReactDOM.render(<Root />, document.querySelector("#root"));
 ```
+
+From now on, any component wrapped in `ApolloProvider` can react GraphQL sources.
+
+### Creating First Component and Fetch Data
+
+Let's create a component `SongList` that fetches songs and lists inside itself. It's so easy to write query and execute in the component. All we need to use `useQuery` hook and `gql` funtion that Apollo Client serves us.
+
+```jsx
+import React from "react";
+import { gql, useQuery } from "@apollo/client";
+
+const GET_SONGS = gql`
+    query GetSongs {
+        songs {
+            title
+        }
+    }
+`;
+
+const SongList = () => {
+    const { loading, error, data } = useQuery(GET_SONGS);
+
+    if (loading) return "Loading...";
+    if (error) return `Error! ${error.message}`;
+
+    return (
+        <ul>
+            {data.songs.map((el) => (
+                <li key={el.title}>{el.title}</li>
+            ))}
+        </ul>
+    );
+};
+
+export default SongList;
+```
+
+> In case of any error, you should check your console everytime. Error codes and their definitions are placed in `node_modules/@apollo/client/invariantErrorCodes.js`
+>
+> 
