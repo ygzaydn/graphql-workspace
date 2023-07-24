@@ -1,0 +1,45 @@
+{
+  "users": [
+    {
+      "id": "23",
+      "firstName": "Bill",
+      "age": 15,
+      "companyId": "1"
+    },
+    {
+      "id": "40",
+      "firstName": "Angelica",
+      "age": 55,
+      "companyId": "1"
+    },
+    {
+      "id": "41",
+      "firstName": "Bill",
+      "age": 12,
+      "companyId": "2"
+    },
+    {
+      "id": "42",
+      "firstName": "Mike",
+      "age": 5,
+      "companyId": "3"
+    }
+  ],
+  "companies": [
+    {
+      "id": 1,
+      "name": "Apple",
+      "description": "Apple Inc."
+    },
+    {
+      "id": 2,
+      "name": "Google",
+      "description": "Google Inc."
+    },
+    {
+      "id": 3,
+      "name": "Meta",
+      "description": "Meta Inc."
+    }
+  ]
+}
