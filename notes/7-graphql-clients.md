@@ -89,5 +89,190 @@ export default SongList;
 ```
 
 > In case of any error, you should check your console everytime. Error codes and their definitions are placed in `node_modules/@apollo/client/invariantErrorCodes.js`
->
-> 
+
+Before moving on, lets add routes to our project, we will need them on next parts. Import necessary functions from `react-router` and edit `index.js` as follows:
+
+```js
+import React from "react";
+import ReactDOM from "react-dom";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import SongList from "./components/songlist";
+import {
+    createBrowseouter,
+    createHashRouter,
+    RouterProvider,
+} from "react-router-dom";
+
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    uri: "http://localhost:4000/graphql",
+});
+
+const router = createHashRouter([
+    {
+        path: "/",
+        element: <SongList />,
+    },
+]);
+
+const Root = () => {
+    return (
+        <ApolloProvider client={client}>
+            <RouterProvider router={router} />
+        </ApolloProvider>
+    );
+};
+
+ReactDOM.render(<Root />, document.querySelector("#root"));
+
+```
+
+
+## Caching on Apollo
+
+Whenever Apollo Client fetches query results from server, it automatically *caches* those results locally. This makes later executions of that same query extremely fast. Codes on this section are for references, they are not used in our system.
+
+### Polling
+
+Polling provides near-real-time synchronization with your server by executing your query periodically at a specified interval. To enable polling for a query, pass a pollInterval configuration option to the useQuery hook with an interval in milliseconds. As an example:
+
+```jsx
+const { loading, error, data } = useQuery   (GET_DOG_PHOTO, {
+  variables: { breed },
+  pollInterval: 500,
+});
+
+```
+
+By setting pollInterval to `500`, we fetch the current breed's image from the server every 0.5 seconds. Note that if you set pollInterval to `0`, the query does not poll.
+
+### Refetching
+
+In order to force refetching, we can use `refetch` method that useQuery serves us.
+
+```jsx
+const { loading, error, data, refetch } = useQuery(GET_DOG_PHOTO, {
+    variables: { breed },
+});
+/*--*/
+<button onClick={() => refetch({ breed: 'new_dog_breed' })}>
+    Refetch new breed!
+</button>
+```
+
+## Mutation
+
+Operating mutations is similar to queries. We use `useMutation` hook this time. Let's create a new component `SongCreate` to create new songs. In our component, if our gql component is `ADD_SONG` and function to add song is `addSong`, then the hook call should look like:
+
+```jsx
+const [addSong, { data, loading, error }] = useMutation(ADD_SONG);
+```
+
+### Passing Variables to GQL
+
+Before moving on our component, it is important to know how to pass variable to our gql query.
+
+We need to define our variable and its type on query definition, then we can call it inside our query. Variables are called with prefix `$`. And we add `!` at the end of type declaration if the variable is must.
+
+To add new song, we'll use `addSong` endpoint, so it will look like:
+
+```gql
+mutation AddSong($title:String!){
+    addSong(title:$title){
+        title
+    }
+}
+```
+So our `SongCreate` component should look like:
+
+```jsx
+import React, { useState } from "react";
+import { gql, useMutation } from "@apollo/client";
+
+const ADD_SONG = gql`
+    mutation AddSong($title: String!) {
+        addSong(title: $title) {
+            title
+        }
+    }
+`;
+
+const SongCreate = () => {
+    const [name, setName] = useState("");
+    const [addSong, { data, loading, error }] = useMutation(ADD_SONG);
+
+    if (loading) return "Submitting...";
+    if (error) return `Submission error! ${error.message}`;
+
+    return (
+        <div>
+            <h3>Create a new song</h3>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    addSong({
+                        variables: {
+                            title: name,
+                        },
+                    });
+                }}
+            >
+                <label htmlFor="title">Song Title:</label>
+                <input
+                    id="title"
+                    placeholder="Enter Song Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <button type="submit">Create a new song</button>
+            </form>
+        </div>
+    );
+};
+
+export default SongCreate;
+```
+
+And, add `SongCreate` component to */create* endpoint.
+
+```js
+import React from "react";
+import ReactDOM from "react-dom";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import SongList from "./components/songlist";
+import SongCreate from "./components/songcreate";
+import {
+    createBrowseouter,
+    createHashRouter,
+    RouterProvider,
+} from "react-router-dom";
+
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    uri: "http://localhost:4000/graphql",
+});
+
+const router = createHashRouter([
+    {
+        path: "/",
+        element: <SongList />,
+    },
+    {
+        path: "/create",
+        element: <SongCreate />,
+    },
+]);
+
+const Root = () => {
+    return (
+        <ApolloProvider client={client}>
+            <RouterProvider router={router} />
+        </ApolloProvider>
+    );
+};
+
+ReactDOM.render(<Root />, document.querySelector("#root"));
+```
+
+> Notice that we've used `HashRouter`. So, in order to react `SongCreate` component, we should navigate to *http://localhost:4000/#/create*.
+
