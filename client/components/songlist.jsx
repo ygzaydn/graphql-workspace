@@ -5,7 +5,7 @@ import GET_SONGS from "../queries/fetchSongs";
 import DELETE_SONG from "../mutations/deleteSong";
 
 const SongList = () => {
-    const { loading, error, data } = useQuery(GET_SONGS);
+    const { loading, error, data, refetch } = useQuery(GET_SONGS);
     const [deleteSong] = useMutation(DELETE_SONG);
 
     if (loading) return "Loading...";
@@ -24,12 +24,12 @@ const SongList = () => {
                     >
                         <p style={{ marginRight: 2 }}>{el.title}</p>
                         <button
-                            onClick={() =>
-                                deleteSong({
+                            onClick={async () => {
+                                await deleteSong({
                                     variables: { id: el.id },
-                                    refetchQueries: [{ query: GET_SONGS }],
-                                })
-                            }
+                                });
+                                await refetch();
+                            }}
                         >
                             X
                         </button>

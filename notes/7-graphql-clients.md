@@ -397,7 +397,6 @@ const DELETE_SONG = gql`
 `;
 
 export default DELETE_SONG;
-
 ```
 
 So overall `SongList` component should look like:
@@ -435,6 +434,55 @@ const SongList = () => {
                                     refetchQueries: [{ query: GET_SONGS }],
                                 })
                             }
+                        >
+                            X
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            <Link to="/create">Create a new song</Link>
+        </div>
+    );
+};
+
+export default SongList;
+```
+
+Another way to operate delete operation successfully is to use `refetch` method. We are able to use this method because we're already fetching data with `useQuery` in the same particular component. So instead of use `refetchQueries`, we are able to get data with the following code:
+
+```jsx
+import React from "react";
+import { useMutation, useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import GET_SONGS from "../queries/fetchSongs";
+import DELETE_SONG from "../mutations/deleteSong";
+
+const SongList = () => {
+    const { loading, error, data, refetch } = useQuery(GET_SONGS);
+    const [deleteSong] = useMutation(DELETE_SONG);
+
+    if (loading) return "Loading...";
+    if (error) return `Error! ${error.message}`;
+
+    return (
+        <div>
+            <ul>
+                {data.songs.map((el) => (
+                    <li
+                        key={el.title}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        <p style={{ marginRight: 2 }}>{el.title}</p>
+                        <button
+                            onClick={async () => {
+                                await deleteSong({
+                                    variables: { id: el.id },
+                                });
+                                await refetch();
+                            }}
                         >
                             X
                         </button>
