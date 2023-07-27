@@ -1,32 +1,31 @@
 import React, { useState } from "react";
-import { gql, useMutation } from "@apollo/client";
-
-const ADD_SONG = gql`
-    mutation AddSong($title: String!) {
-        addSong(title: $title) {
-            title
-        }
-    }
-`;
+import { useMutation } from "@apollo/client";
+import { Link, useNavigate } from "react-router-dom";
+import GET_SONGS from "../queries/fetchSongs";
+import ADD_SONG from "../mutations/addSong";
 
 const SongCreate = () => {
     const [name, setName] = useState("");
     const [addSong, { data, loading, error }] = useMutation(ADD_SONG);
+    const navigate = useNavigate();
 
     if (loading) return "Submitting...";
     if (error) return `Submission error! ${error.message}`;
 
     return (
         <div>
+            <Link to="/">Back</Link>
             <h3>Create a new song</h3>
             <form
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                     event.preventDefault();
-                    addSong({
+                    await addSong({
                         variables: {
                             title: name,
                         },
+                        refetchQueries: [{ query: GET_SONGS, variables: {} }],
                     });
+                    navigate("/");
                 }}
             >
                 <label htmlFor="title">Song Title:</label>

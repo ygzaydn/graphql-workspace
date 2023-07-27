@@ -168,11 +168,13 @@ Operating mutations is similar to queries. We use `useMutation` hook this time. 
 const [addSong, { data, loading, error }] = useMutation(ADD_SONG);
 ```
 
-### Passing Variables to GQL
+### Passing Variables to GQL and Add Operation
 
 Before moving on our component, it is important to know how to pass variable to our gql query.
 
 We need to define our variable and its type on query definition, then we can call it inside our query. Variables are called with prefix `$`. And we add `!` at the end of type declaration if the variable is must.
+
+![7.6](images/7.6.png)
 
 To add new song, we'll use `addSong` endpoint, so it will look like:
 
@@ -276,3 +278,173 @@ ReactDOM.render(<Root />, document.querySelector("#root"));
 
 > Notice that we've used `HashRouter`. So, in order to react `SongCreate` component, we should navigate to *http://localhost:4000/#/create*.
 
+
+As a side note, remember that we are using `GraphiQL`. So it's also possible to operate mutation operations on `localhost:4000/graphql` page.
+
+To add a variable, we have to click bottom left (*Query Variables*) section and add our variables as **JSON** format. Example:
+
+```json
+{
+  "title": "GraphQL Song"
+}
+```
+
+> mutation methods are asynchronous, which you can use .then/.catch or async/await methods to run functions whenever they are done.
+
+Lets navigate to homepage whenever we add a new song, all we need to do is edit our `onSubmit` method
+
+```jsx
+//songcreate.jsx
+ <form
+    onSubmit={async (event) => {
+        event.preventDefault();
+        await addSong({
+            variables: {
+                title: name,
+            },
+        });
+        navigate("/");
+    }}
+>
+```
+
+There is an issue that we have to consider now. When we refresh page on `localhost:4000/#/create` and create a new song and hit create button, our new song will be listed on `SongList` component. But when we refresh page on `localhost:4000/` and run through creating new songs, the newly created song won't be shown on our page.
+
+![7.7](./images/7.7.png)
+
+We have to rerun the query after mutation is completed. To do this, all we need to do is change `mutation` method call.
+
+```jsx
+<form
+    onSubmit={async (event) => {
+        event.preventDefault();
+        await addSong({
+            variables: {
+                title: name,
+            },
+            refetchQueries: [{ query: GET_SONGS, variables: {} }],
+        });
+        navigate("/");
+    }}
+>
+```
+
+`GET_SONGS` is the query that we've defined on `SongList` component. Make sure to export it before using.
+
+> As a convention, we generally create different files for query and mutate operations, and import them whenever needed.
+>
+> So move your queries to /client/queries, and mutations to /client/mutations folders.
+> As a result, we'll have 2 different files, `addSong.js` and `fetchSong.js`
+
+
+```js
+//fetchSong.js
+import { gql } from "@apollo/client";
+
+const GET_SONGS = gql`
+    query GetSongs {
+        songs {
+            title
+        }
+    }
+`;
+
+export default GET_SONGS;
+
+
+/*--*/
+//addSong.js
+import { gql } from "@apollo/client";
+
+const ADD_SONG = gql`
+    mutation AddSong($title: String!) {
+        addSong(title: $title) {
+            title
+        }
+    }
+`;
+
+export default ADD_SONG;
+```
+
+
+## Delete Operation
+
+To delete records, we need to use `deleteSong` endpoint.
+
+```gql
+mutation DeleteSong($id:ID!) {
+  deleteSong(id:$id) {
+    title
+    id
+  }
+}
+```
+
+Lets add the mutation under mutation folder.
+
+```js
+//mutations/deleteSong.js
+import { gql } from "@apollo/client";
+
+const DELETE_SONG = gql`
+    mutation DeleteSong($id: ID!) {
+        deleteSong(id: $id) {
+            title
+            id
+        }
+    }
+`;
+
+export default DELETE_SONG;
+
+```
+
+So overall `SongList` component should look like:
+
+```jsx
+import React from "react";
+import { useMutation, useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import GET_SONGS from "../queries/fetchSongs";
+import DELETE_SONG from "../mutations/deleteSong";
+
+const SongList = () => {
+    const { loading, error, data } = useQuery(GET_SONGS);
+    const [deleteSong] = useMutation(DELETE_SONG);
+
+    if (loading) return "Loading...";
+    if (error) return `Error! ${error.message}`;
+
+    return (
+        <div>
+            <ul>
+                {data.songs.map((el) => (
+                    <li
+                        key={el.title}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        <p style={{ marginRight: 2 }}>{el.title}</p>
+                        <button
+                            onClick={() =>
+                                deleteSong({
+                                    variables: { id: el.id },
+                                    refetchQueries: [{ query: GET_SONGS }],
+                                })
+                            }
+                        >
+                            X
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            <Link to="/create">Create a new song</Link>
+        </div>
+    );
+};
+
+export default SongList;
+```

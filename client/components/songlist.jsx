@@ -1,28 +1,43 @@
 import React from "react";
-import { gql, useQuery } from "@apollo/client";
-
-const GET_SONGS = gql`
-    query GetSongs {
-        songs {
-            title
-        }
-    }
-`;
+import { useMutation, useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import GET_SONGS from "../queries/fetchSongs";
+import DELETE_SONG from "../mutations/deleteSong";
 
 const SongList = () => {
     const { loading, error, data } = useQuery(GET_SONGS);
+    const [deleteSong] = useMutation(DELETE_SONG);
 
     if (loading) return "Loading...";
     if (error) return `Error! ${error.message}`;
 
-    console.log(data);
-
     return (
-        <ul>
-            {data.songs.map((el) => (
-                <li key={el.title}>{el.title}</li>
-            ))}
-        </ul>
+        <div>
+            <ul>
+                {data.songs.map((el) => (
+                    <li
+                        key={el.title}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        <p style={{ marginRight: 2 }}>{el.title}</p>
+                        <button
+                            onClick={() =>
+                                deleteSong({
+                                    variables: { id: el.id },
+                                    refetchQueries: [{ query: GET_SONGS }],
+                                })
+                            }
+                        >
+                            X
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            <Link to="/create">Create a new song</Link>
+        </div>
     );
 };
 
