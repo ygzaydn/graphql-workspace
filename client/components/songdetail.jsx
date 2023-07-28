@@ -59,7 +59,6 @@ const SongDetail = () => {
                         await addLyric({
                             variables: { content: text, songId: id },
                         });
-                        await refetch();
                     }}
                     style={{ display: "flex", alignItems: "center" }}
                 >

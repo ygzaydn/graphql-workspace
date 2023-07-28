@@ -496,3 +496,285 @@ const SongList = () => {
 
 export default SongList;
 ```
+
+
+## Cache Updating
+
+Mutation operations changes the data on the backend and they requires some mechanisms to reflect that change to frontend. So far, we've used `refetch` method on useQuery and `refetchQueries` options that useMutation serves.
+
+Both of those approaches requires another http call to the backend. That means, for a little small change of our data, we fetch the related data completely. By doing this we double the http call we make and rewrite the data that is already the same.
+
+On that step, we can work on updating cache without fetching the whole query. There are different methods for this operation.
+
+### Using dataIdFromObject to Normalize State
+
+Apollo Client serves us a configuration option which called as `dataIdFromObject`. `dataIdFromObject` option normalizes the state with its given option. For our case, all of our records have `id` field. So we can use this field to normalize our state in store.
+
+Configuration is simple, all we need to do is add the following:
+
+```js
+//index.js
+
+/*---*/
+const client = new ApolloClient({
+    cache: new InMemoryCache({ dataIdFromObject: (o) => o.id }),
+    uri: "http://localhost:4000/graphql",
+});
+/*---*/
+
+```
+
+By adding this option to Apollo Client, we have normalized all store entities that we've or we'll fetched. Entities that is fetched by using queries will be automatically updated after mutations now.
+
+To demonstrate you, we can add a unique page for each song. We'll reach the pages by `localhost:4000/#/song/:id`. Let's add component `SongDetail`. (On this point, I will directly add the whole component, since we've worked each parts before)
+
+```jsx
+import React, { useState } from "react";
+import { useMutation, useQuery } from "@apollo/client";
+import GET_SONG from "../queries/fetchSong";
+import ADD_LYRICS from "../mutations/addLyrics";
+import LIKE_LYRIC from "../mutations/likeLyric";
+import { Link, useParams } from "react-router-dom";
+
+const SongDetail = () => {
+    const params = useParams();
+    const { id } = params;
+    const { data, error, loading, refetch } = useQuery(GET_SONG, {
+        variables: { id },
+    });
+    const [addLyric] = useMutation(ADD_LYRICS);
+    const [likeLyric] = useMutation(LIKE_LYRIC);
+    const [text, setText] = useState("");
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error!</div>;
+
+    const likeLyricHandler = async (id) => {
+        await likeLyric({ variables: { id } });
+        await refetch();
+    };
+
+    return (
+        <div>
+            <Link to="/">Back home</Link>
+            <h3>Song Details</h3>
+            <div>
+                <h4>name: {data.song.title}</h4>
+                <div>
+                    <h5>Lyrics:</h5>
+                    {data.song.lyrics.map((el) => (
+                        <div
+                            key={el.id}
+                            style={{ marginLeft: 20 }}
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "30rem 10rem",
+                            }}
+                        >
+                            <span style={{ marginRight: 20 }}>
+                                {el.content}
+                            </span>
+                            <div>
+                                <span style={{ marginRight: 2 }}>
+                                    Likes: {el.likes}
+                                </span>
+                                <button onClick={() => likeLyricHandler(el.id)}>
+                                    Like Now
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <form
+                    onSubmit={async () => {
+                        await addLyric({
+                            variables: { content: text, songId: id },
+                        });
+                    }}
+                    style={{ display: "flex", alignItems: "center" }}
+                >
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label htmlFor="lyric">Add new Lyric</label>
+                        <input
+                            id="lyric"
+                            onChange={(e) => setText(e.target.value)}
+                            value={text}
+                            placeholder="Enter Lyrics"
+                            style={{ width: "15rem" }}
+                        />
+                    </div>
+
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default SongDetail;
+```
+
+And, edit Router on `index.js`:
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import SongList from "./components/songlist";
+import SongCreate from "./components/songcreate";
+import {
+    createBrowseouter,
+    createHashRouter,
+    RouterProvider,
+} from "react-router-dom";
+import SongDetail from "./components/songdetail";
+
+const client = new ApolloClient({
+    cache: new InMemoryCache({ dataIdFromObject: (o) => o.id }),
+    uri: "http://localhost:4000/graphql",
+});
+
+const router = createHashRouter([
+    {
+        path: "/",
+        element: <SongList />,
+    },
+    {
+        path: "/create",
+        element: <SongCreate />,
+    },
+    { path: "/song/:id", element: <SongDetail /> },
+]);
+
+const Root = () => {
+    return (
+        <ApolloProvider client={client}>
+            <RouterProvider router={router} />
+        </ApolloProvider>
+    );
+};
+
+ReactDOM.render(<Root />, document.querySelector("#root"));
+```
+
+And queries & mutations:
+
+```js
+//mutations/addLyrics.js
+import { gql } from "@apollo/client";
+
+const ADD_LYRICS = gql`
+    mutation AddLyrics($content: String, $songId: ID) {
+        addLyricToSong(content: $content, songId: $songId) {
+            title
+            id
+            lyrics {
+                content
+                id
+            }
+        }
+    }
+`;
+
+export default ADD_LYRICS;
+
+//mutations/likeLyric.js
+import { gql } from "@apollo/client";
+
+const LIKE_LYRIC = gql`
+    mutation LikeLyric($id: ID) {
+        likeLyric(id: $id) {
+            id
+        }
+    }
+`;
+
+export default LIKE_LYRIC;
+
+//queries/fetchSong.js
+import { gql } from "@apollo/client";
+
+const GET_SONG = gql`
+    query GetSong($id: ID!) {
+        song(id: $id) {
+            id
+            title
+            lyrics {
+                id
+                likes
+                content
+            }
+        }
+    }
+`;
+export default GET_SONG;
+
+```
+
+Before moving on, we should understand the logic behind `dataIdFromObject`. What we need to focus are the queries that have been made on the app. We've fetched the data from those two endpoints:
+
+```
+songs: [SongType]
+song(id: ID!): SongType
+
+// whereas
+SongType: {
+    id: ID
+    title: String
+    lyrics: [LyricType]
+}
+
+```
+
+So `dataIdFromObject` have normalized entities that have type `SongType` based on their `id`s. Now when we add new lyrics to the song, we do not need to run query, Apollo Client detects the change on entity and updates its cache. But when we like a song, we have to run refetch because on Apollo Store we do not have specific informations about lyrics. This is very important to understand.
+
+Similarly, we can remove `refetchOnQueries` option on `SongCreate` component, we do not need it anymore.
+
+```jsx
+//songcreate.jsx
+import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+import { Link, useNavigate } from "react-router-dom";
+import GET_SONGS from "../queries/fetchSongs";
+import ADD_SONG from "../mutations/addSong";
+
+const SongCreate = () => {
+    const [name, setName] = useState("");
+    const [addSong, { data, loading, error }] = useMutation(ADD_SONG);
+    const navigate = useNavigate();
+
+    if (loading) return "Submitting...";
+    if (error) return `Submission error! ${error.message}`;
+
+    return (
+        <div>
+            <Link to="/">Back</Link>
+            <h3>Create a new song</h3>
+            <form
+                onSubmit={async (event) => {
+                    event.preventDefault();
+                    await addSong({
+                        variables: {
+                            title: name,
+                        },
+                        //refetchQueries: [{ query: GET_SONGS, variables: {} }],
+                    });
+                    navigate("/");
+                }}
+            >
+                <label htmlFor="title">Song Title:</label>
+                <input
+                    id="title"
+                    placeholder="Enter Song Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <button type="submit">Create a new song</button>
+            </form>
+        </div>
+    );
+};
+
+export default SongCreate;
+
+```

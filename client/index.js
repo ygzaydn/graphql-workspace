@@ -11,7 +11,7 @@ import {
 import SongDetail from "./components/songdetail";
 
 const client = new ApolloClient({
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({ dataIdFromObject: (o) => o.id }),
     uri: "http://localhost:4000/graphql",
 });
 

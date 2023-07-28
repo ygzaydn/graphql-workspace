@@ -23,7 +23,7 @@ const SongCreate = () => {
                         variables: {
                             title: name,
                         },
-                        refetchQueries: [{ query: GET_SONGS, variables: {} }],
+                        //refetchQueries: [{ query: GET_SONGS, variables: {} }],
                     });
                     navigate("/");
                 }}
