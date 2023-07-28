@@ -8,6 +8,7 @@ import {
     createHashRouter,
     RouterProvider,
 } from "react-router-dom";
+import SongDetail from "./components/songdetail";
 
 const client = new ApolloClient({
     cache: new InMemoryCache(),
@@ -23,6 +24,7 @@ const router = createHashRouter([
         path: "/create",
         element: <SongCreate />,
     },
+    { path: "/song/:id", element: <SongDetail /> },
 ]);
 
 const Root = () => {

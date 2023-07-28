@@ -22,7 +22,10 @@ const SongList = () => {
                             alignItems: "center",
                         }}
                     >
-                        <p style={{ marginRight: 2 }}>{el.title}</p>
+                        <Link to={`/song/${el.id}`} style={{ marginRight: 2 }}>
+                            {el.title}
+                        </Link>
+
                         <button
                             onClick={async () => {
                                 await deleteSong({
