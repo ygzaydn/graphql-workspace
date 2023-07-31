@@ -19,9 +19,17 @@ const SongDetail = () => {
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error!</div>;
 
-    const likeLyricHandler = async (id) => {
-        await likeLyric({ variables: { id } });
-        await refetch();
+    const likeLyricHandler = async ({ id, likes }) => {
+        await likeLyric({
+            variables: { id },
+            optimisticResponse: {
+                likeLyric: {
+                    id,
+                    __typeName: "LyricType",
+                    likes,
+                },
+            },
+        });
     };
 
     return (
@@ -48,7 +56,14 @@ const SongDetail = () => {
                                 <span style={{ marginRight: 2 }}>
                                     Likes: {el.likes}
                                 </span>
-                                <button onClick={() => likeLyricHandler(el.id)}>
+                                <button
+                                    onClick={() =>
+                                        likeLyricHandler({
+                                            id: el.id,
+                                            likes: el.likes,
+                                        })
+                                    }
+                                >
                                     Like Now
                                 </button>
                             </div>

@@ -685,6 +685,7 @@ const LIKE_LYRIC = gql`
     mutation LikeLyric($id: ID) {
         likeLyric(id: $id) {
             id
+            likes
         }
     }
 `;
@@ -726,5 +727,12 @@ SongType: {
 
 ```
 
-So `dataIdFromObject` have normalized entities that have type `SongType` based on their `id`s. Now when we add new lyrics to the song, we do not need to run query, Apollo Client detects the change on entity and updates its cache. But when we like a song, we have to run refetch because on Apollo Store we do not have specific informations about lyrics. This is very important to understand.
+So `dataIdFromObject` have normalized entities that have type `SongType` based on their `id`s. Now when we add new lyrics to the song, we do not need to run query, Apollo Client detects the change on entity and updates its cache. 
 
+We do not need to refech lyric likes aswell, since `dataIdFromObject` is normalized lyrics aswell.
+
+## Optimistic Updates
+
+We guess the response of the mutation call and update the UI customly. After mutation is completed, the result will be shown on the screen.
+
+![7.8](./images/7.8.png)
