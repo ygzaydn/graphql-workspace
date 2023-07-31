@@ -7,4 +7,5 @@
 [5. Tips on Query Writing](5-tips-on-query-writing.md)
 [6. Mutations](6-mutations.md)
 [7. GraphQL Clients](7-graphql-clients.md)
+[8. Authenticaion with GraphQL](8-authentication-on-graphql.md)
 
