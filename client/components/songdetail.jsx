@@ -11,6 +11,7 @@ const SongDetail = () => {
     const { data, error, loading, refetch } = useQuery(GET_SONG, {
         variables: { id },
     });
+
     const [addLyric] = useMutation(ADD_LYRICS);
     const [likeLyric] = useMutation(LIKE_LYRIC);
     const [text, setText] = useState("");
@@ -41,7 +42,7 @@ const SongDetail = () => {
                             }}
                         >
                             <span style={{ marginRight: 20 }}>
-                                {el.content}
+                                {el.content} - {el.id}
                             </span>
                             <div>
                                 <span style={{ marginRight: 2 }}>
